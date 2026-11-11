@@ -1,26 +1,49 @@
+# SRN: PES2UG24CS061
+# Student: Andey Hemanth
+# Lab 7: Fuzzing for Input Validation Bugs - Fixed Parser
+
 def clean_pan(pan):
     """
     Removes spaces from a PAN and upper-cases it.
-    Assumes pan is a non-empty string.
+    Safely handles None, empty string, and non-string inputs.
     """
-    return pan.strip().replace(' ', '').upper()
+    if not isinstance(pan, str):
+        return ""
+    return pan.strip().replace(" ", "").upper()
+
 
 def parse_amount(text):
     """
     Converts an amount such as 'Rs 12,50,000' into an int.
-    Assumes only digits remain after removing 'Rs', commas and spaces.
+    Safely handles None, malformed strings, and non-numeric inputs.
     """
-    text = text.replace('Rs', '').replace(',', '').strip()
-    return int(text)
+    if not isinstance(text, str):
+        return 0
+    cleaned = text.replace("Rs", "").replace("rs", "").replace(",", "").strip()
+    try:
+        return int(cleaned)
+    except ValueError:
+        return 0
+
 
 def parse_tax_slab(line):
     """
     Parses 'LOW-HIGH:RATE' into a (low, high, rate) tuple.
-    Assumes the line is always in that exact format.
+    Safely handles None, missing delimiters, non-numeric values, and malformed inputs.
     """
-    limits, rate = line.split(':')
-    low, high = limits.split('-')
-    return int(low), int(high), int(rate)
+    if not isinstance(line, str):
+        return (0, 0, 0)
+    try:
+        if ":" not in line:
+            return (0, 0, 0)
+        limits, rate_str = line.split(":", 1)
+        if "-" not in limits:
+            return (0, 0, 0)
+        low_str, high_str = limits.split("-", 1)
+        return int(low_str.strip()), int(high_str.strip()), int(rate_str.strip())
+    except Exception:
+        return (0, 0, 0)
+
 
 def main():
     print("==== Running clean_pan ====")
@@ -34,6 +57,7 @@ def main():
     print("\n==== Running parse_tax_slab ====")
     value = input("Enter a tax slab as LOW-HIGH:RATE (e.g. 250000-500000:5): ")
     print("Tax slab (low, high, rate):", parse_tax_slab(value))
+
 
 if __name__ == "__main__":
     main()
